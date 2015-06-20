@@ -1,0 +1,3 @@
+[submodule "contrib/range-v3"]
+	path = contrib/range-v3
+	url = git@github.com:ericniebler/range-v3.git
