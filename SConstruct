@@ -2,12 +2,13 @@ import os
 
 buildType = 'debug'
 
+range_include = '#contrib/range-v3/include'
 include = '#build/$BUILDTYPE/include'
 lib = '#build/$BUILDTYPE/lib'
 bin = '#build/$BUILDTYPE/bin'
 
 env = Environment(BUILDTYPE = buildType,
-                  CPPPATH = [include],
+                  CPPPATH = [include, range_include],
                   LIBPATH = [lib])
 
 env.Append(CCFLAGS = "-g -std=c++1y")
@@ -21,17 +22,16 @@ env.Append(CCFLAGS = ["-pedantic"
                       , "-Wformat=2"
                       , "-Winit-self"
                       , "-Wmissing-include-dirs"
-                      , "-Wold-style-cast"
                       , "-Woverloaded-virtual"
                       , "-Wredundant-decls"
-                      , "-Wshadow"
                       , "-Wsign-conversion"
                       , "-Wsign-promo"
                       , "-Wstrict-overflow=5"
                       , "-Wswitch-default"
                       , "-Wundef"
                       , "-Werror"
-                      , "-Wno-unused"])
+                      , "-Wno-unused"
+                      , "-Wno-unused-parameter"])
 
 compiler = 'clang++'
 #compiler = 'g++'
