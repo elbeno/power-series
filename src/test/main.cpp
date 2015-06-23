@@ -58,10 +58,10 @@ namespace power_series
     auto h2 = *ranges::begin(std::forward<R2>(r2));
 
     auto head = h1 * h2;
-    /*return view::concat(view::single(head),
+    return 0;
+    /*view::concat(view::single(head),
                         add(mult(view::tail(r1), r2),
                         mult(view::tail(r2), series(h1))));*/
-    return 0;
   }
 
 }

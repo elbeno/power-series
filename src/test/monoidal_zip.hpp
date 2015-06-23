@@ -1,10 +1,6 @@
 #pragma once
 
-#include <range/v3/view/concat.hpp>
-#include <range/v3/view/repeat.hpp>
 #include <range/v3/view/zip_with.hpp>
-
-#include <type_traits>
 
 namespace ranges
 {
@@ -22,176 +18,198 @@ namespace ranges
               C1::value >= 0 && C2::value >= 0 ?
                 max_(C1::value, C2::value) :
                 finite>;
-
-      template<typename R2, typename Z>
-      using monoidal_zip_extended_range =
-        meta::if_c<range_cardinality<R2>::value == infinite,
-                   R2,
-                   concat_view<R2, repeat_view<Z>>>;
-
-      template<typename R2, typename Z>
-      monoidal_zip_extended_range<R2, Z>
-      make_extended_range(R2&& r2, Z&&,
-                          std::enable_if_t<range_cardinality<R2>::value == infinite>* = 0)
-      {
-        return r2;
-      }
-
-      template<typename R2, typename Z>
-      monoidal_zip_extended_range<R2, Z>
-      make_extended_range(R2&& r2, Z&& z,
-                          std::enable_if_t<range_cardinality<R2>::value != infinite>* = 0)
-      {
-        return view::concat(std::forward<R2>(r2),
-                            view::repeat(std::forward<Z>(z)));
-      }
-
     } // namespace detail
 
-    template<typename Fun, typename R1, typename R2_, typename Z>
+    template<typename Fun, typename R1, typename R2, typename Z>
     struct iter_monoidal_zip_view
-      : view_facade<iter_monoidal_zip_view<Fun, R1, R2_, Z>,
+      : view_facade<iter_monoidal_zip_view<Fun, R1, R2, Z>,
                     range_cardinality<R1>::value>
     {
     private:
       friend range_access;
       semiregular_t<function_type<Fun>> fun_;
-
-      using R2 = detail::monoidal_zip_extended_range<R2_, Z>;
       R1 r1_;
       R2 r2_;
+      Z z_;
+
       using difference_type_ = common_type_t<range_difference_t<R1>,
                                              range_difference_t<R2>>;
       using size_type_ = meta::eval<std::make_unsigned<difference_type_>>;
 
+      template <bool IsConst>
       struct sentinel;
+
+      template <bool IsConst>
       struct cursor
       {
-      private:
-        friend sentinel;
-        using fun_ref_ = semiregular_ref_or_val_t<function_type<Fun>, true>;
-        fun_ref_ fun_;
-        range_iterator_t<R1> it1_;
-        range_iterator_t<R2> it2_;
-
-        auto indirect_move_() const
-        RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
-        (
-          fun_(move_tag{}, it1_, it2_)
-        )
-        template<typename Sent>
-        friend auto indirect_move(basic_iterator<cursor, Sent> const &it)
-        RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
-        (
-            get_cursor(it).indirect_move_()
-        )
-      public:
         using difference_type = common_type_t<range_difference_t<R1>,
                                               range_difference_t<R2>>;
-        using single_pass =
-          meta::or_c<(bool) Derived<ranges::input_iterator_tag,
-                                    range_category_t<R1>>(),
-                     (bool) Derived<ranges::input_iterator_tag,
-                                    range_category_t<R2>>()>;
-        using value_type =
-          detail::decay_t<decltype(fun_(copy_tag{},
-                                        range_iterator_t<R1>{},
-                                        range_iterator_t<R2>{}))>;
+      private:
+        friend struct sentinel<IsConst>;
+        template <typename T>
+        using constify_if = meta::apply<meta::add_const_if_c<IsConst>, T>;
+        using monoidal_zip_view_t = constify_if<iter_monoidal_zip_view>;
+        monoidal_zip_view_t *rng_;
+        using fun_ref_ = semiregular_ref_or_val_t<function_type<Fun>, true>;
+        fun_ref_ fun_;
+        range_iterator_t<constify_if<R1>> it1_;
+        range_iterator_t<constify_if<R2>> it2_;
+        difference_type diff_;
+
+      public:
+        using single_pass = meta::fast_or<SinglePass<range_iterator_t<R1>>,
+                                          SinglePass<range_iterator_t<R2>>>;
 
         cursor() = default;
-        cursor(fun_ref_ fun, range_iterator_t<R1> it1, range_iterator_t<R2> it2)
-          : fun_(std::move(fun)), it1_(std::move(it1)), it2_(std::move(it2))
+        cursor(monoidal_zip_view_t &rng, fun_ref_ fun, begin_tag)
+          : rng_{&rng}
+          , fun_{std::move(fun)}
+          , it1_{begin(rng.r1_)}
+          , it2_{begin(rng.r2_)}
+          , diff_{0}
+        {}
+        cursor(monoidal_zip_view_t &rng, fun_ref_ fun, end_tag)
+          : rng_{&rng}
+          , fun_{std::move(fun)}
+          , it1_{end(rng.r1_)}
+          , it2_{end(rng.r2_)}
+          , diff_{detail::distance_to(begin(rng.r1_), it1_) -
+                detail::distance_to(begin(rng.r2_), it2_)}
         {}
         auto current() const
         RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
         (
-            fun_(it1_, it2_)
+          diff_ == 0 ?
+            fun_(it1_, it2_) :
+            diff_ > 0 ?
+              fun_(it1_, &rng_->z_) :
+              fun_(&rng_->z_, it2_)
         )
         void next()
         {
+          // r1 longer than r2
+          if (it2_ == end(rng_->r2_))
+          {
+            detail::inc(it1_);
+            ++diff_;
+            return;
+          }
+          // r2 longer than r1
+          if (it1_ == end(rng_->r1_))
+          {
+            --diff_;
+            detail::inc(it2_);
+            return;
+          }
+          // same
           detail::inc(it1_);
           detail::inc(it2_);
         }
         bool equal(cursor const &that) const
         {
-          return detail::equal_to(it1_, that.it1_);
+          return detail::equal_to(it1_, that.it1_)
+            && detail::equal_to(it2_, that.it2_)
+            && diff_ == that.diff_;
         }
         CONCEPT_REQUIRES(meta::and_c<(bool) BidirectionalRange<R1>(),
                                      (bool) BidirectionalRange<R2>()>::value)
         void prev()
         {
+          // r1 longer than r2
+          if (diff_ > 0)
+          {
+            detail::dec(it1_);
+            --diff_;
+            return;
+          }
+          // r2 longer than r1
+          if (diff_ < 0)
+          {
+            ++diff_;
+            detail::dec(it2_);
+            return;
+          }
+          // same
           detail::dec(it1_);
           detail::dec(it2_);
         }
         CONCEPT_REQUIRES(meta::and_c<(bool) RandomAccessRange<R1>(),
                                      (bool) RandomAccessRange<R2>()>::value)
-        void advance(difference_type n)
-        {
-          detail::advance_(it1_, n);
-          detail::advance_(it2_, n);
-        }
-        CONCEPT_REQUIRES(meta::and_c<(bool) RandomAccessRange<R1>(),
-                                     (bool) RandomAccessRange<R2>()>::value)
         difference_type distance_to(cursor const &that) const
         {
-          return detail::distance_to(it1_, that.it1_);
+          return detail::max_(detail::distance_to(it1_, that.it1_),
+                              detail::distance_to(it2_, that.it2_));
         }
       };
 
+      template <bool IsConst>
       struct sentinel
       {
       private:
-        range_sentinel_t<R1> end1_;
-        range_sentinel_t<R2> end2_;
+        template <typename T>
+        using constify_if = meta::apply<meta::add_const_if_c<IsConst>, T>;
+        using monoidal_zip_view_t = constify_if<iter_monoidal_zip_view>;
+        range_sentinel_t<constify_if<R1>> end1_;
+        range_sentinel_t<constify_if<R2>> end2_;
       public:
         sentinel() = default;
-        sentinel(detail::any, range_sentinel_t<R1> end1, range_sentinel_t<R2> end2)
-          : end1_(std::move(end1)), end2_(std::move(end2))
+        sentinel(monoidal_zip_view_t &rng, end_tag)
+          : end1_(end(rng.r1_))
+          , end2_(end(rng.r2_))
         {}
-        bool equal(cursor const &pos) const
+        bool equal(cursor<IsConst> const &pos) const
         {
-          return detail::equal_to(pos.it1_, end1_);
+          return detail::equal_to(pos.it1_, end1_)
+            && detail::equal_to(pos.it2_, end2_);
         }
       };
 
-      using are_bounded_t = meta::and_c<(bool) BoundedRange<R1>()>;
+      using are_bounded_t = meta::and_c<(bool) BoundedRange<R1>(),
+                                        (bool) BoundedRange<R2>()>;
 
-      cursor begin_cursor()
+      cursor<false> begin_cursor()
       {
-        return {fun_, begin(r1_), begin(r2_)};
+        return {*this, fun_, begin_tag{}};
       }
-      meta::if_<are_bounded_t, cursor, sentinel> end_cursor()
+      meta::if_<are_bounded_t, cursor<false>, sentinel<false>>
+      end_cursor()
       {
-        return {fun_, end(r1_), begin(r2_)};
-      }
-      CONCEPT_REQUIRES(meta::and_c<(bool) Range<R1 const>(),
-                                   (bool) Range<R2 const>()>::value)
-      cursor begin_cursor() const
-      {
-        return {fun_, begin(r1_), begin(r2_)};
+        return {*this, fun_, end_tag{}};
       }
       CONCEPT_REQUIRES(meta::and_c<(bool) Range<R1 const>(),
                                    (bool) Range<R2 const>()>::value)
-      meta::if_<are_bounded_t, cursor, sentinel> end_cursor() const
+      cursor<true> begin_cursor() const
       {
-        return {fun_, end(r1_), begin(r2_)};
+        return {*this, fun_, begin_tag{}};
+      }
+      CONCEPT_REQUIRES(meta::and_c<(bool) Range<R1 const>(),
+                                   (bool) Range<R2 const>()>::value)
+      meta::if_<are_bounded_t, cursor<true>, sentinel<true>>
+      end_cursor() const
+      {
+        return {*this, fun_, end_tag{}};
       }
     public:
       iter_monoidal_zip_view() = default;
-      explicit iter_monoidal_zip_view(R1 r1, R2_ r2, Z z)
+      explicit iter_monoidal_zip_view(R1 r1, R2 r2, Z z)
         : fun_(as_function(Fun{}))
         , r1_{std::move(r1)}
-        , r2_{detail::make_extended_range(std::move(r2), std::move(z))}
+        , r2_{std::move(r2)}
+        , z_{std::move(z)}
       {}
-      explicit iter_monoidal_zip_view(Fun fun, R1 r1, R2_ r2, Z z)
+      explicit iter_monoidal_zip_view(Fun fun, R1 r1, R2 r2, Z z)
         : fun_(as_function(std::move(fun)))
         , r1_{std::move(r1)}
-        , r2_{detail::make_extended_range(std::move(r2), std::move(z))}
+        , r2_{std::move(r2)}
+        , z_{std::move(z)}
       {}
-      CONCEPT_REQUIRES((bool) SizedRange<R1>())
+      CONCEPT_REQUIRES(meta::and_c<(bool) SizedRange<R1>(),
+                                   (bool) SizedRange<R2>()>::value)
       constexpr size_type_ size() const
       {
-        (size_type_)range_cardinality<R1>::value;
+        return static_cast<size_type_>(
+            detail::max_(range_cardinality<R1>::value,
+                         range_cardinality<R2>::value));
       }
     };
 
