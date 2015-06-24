@@ -13,6 +13,7 @@ env = Environment(BUILDTYPE = buildType,
 
 env.Append(CCFLAGS = "-g -std=c++1y")
 env.Append(CCFLAGS = ["-pedantic"
+                      , "-ftemplate-backtrace-limit=0"
                       , "-Wall"
                       , "-Wextra"
                       , "-Wcast-align"
