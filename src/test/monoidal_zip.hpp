@@ -23,7 +23,8 @@ namespace ranges
     template<typename Fun, typename R1, typename R2, typename Z>
     struct iter_monoidal_zip_view
       : view_facade<iter_monoidal_zip_view<Fun, R1, R2, Z>,
-                    range_cardinality<R1>::value>
+                    detail::monoidal_zip_cardinality<range_cardinality<R1>,
+                                                     range_cardinality<R2>>::value>
     {
     private:
       friend range_access;
