@@ -14,12 +14,6 @@ using namespace ranges;
 
 namespace power_series
 {
-  template <typename T>
-  auto series(T t)
-  {
-    return view::concat(view::single(t), view::repeat(0));
-  }
-
   template <typename Rng>
   auto negate(Rng&& r)
   {
@@ -41,15 +35,6 @@ namespace power_series
   {
     return add(std::forward<R1>(r1),
                negate(std::forward<R2>(r2)));
-  }
-
-  template <typename R1, typename R2>
-  auto simple_mult(R1&& r1, R2&& r2)
-  {
-    return view::monoidal_zip(multiplies<>(),
-                              std::forward<R1>(r1),
-                              std::forward<R2>(r2),
-                              1);
   }
 
   template <typename R1, typename R2>
