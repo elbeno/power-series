@@ -1,6 +1,7 @@
 #include "monoidal_zip.hpp"
+#include "series_mult.hpp"
 
-#include <range/v3/all.hpp>
+#include "range/v3/all.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -54,14 +55,8 @@ namespace power_series
   template <typename R1, typename R2>
   auto mult(R1&& r1, R2&& r2)
   {
-    auto h1 = *ranges::begin(std::forward<R1>(r1));
-    auto h2 = *ranges::begin(std::forward<R2>(r2));
-
-    auto head = h1 * h2;
-    return 0;
-    /*view::concat(view::single(head),
-                        add(mult(view::tail(r1), r2),
-                        mult(view::tail(r2), series(h1))));*/
+    return view::series_mult(std::forward<R1>(r1),
+                             std::forward<R2>(r2));
   }
 
 }
@@ -70,12 +65,11 @@ int main(int, char* [])
 {
   {
     vector<int> v1{1, 2, 3, 4, 5};
-    vector<int> v2{100, 200, 300, 400};
+    vector<int> v2{1, 2, 3, 4, 5};
 
-    auto r = power_series::add(v1, v2);
-    auto m = power_series::mult(v1, v2);
+    auto m = power_series::mult(v2, v1);
 
-    ranges::for_each(r, [](int i){
+    ranges::for_each(m, [](int i){
         cout << i << ' ';
       });
     cout << endl;
