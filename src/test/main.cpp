@@ -41,16 +41,22 @@ void prettyprint(Rng&& r)
   cout << endl;
 }
 
+int collatz(int n)
+{
+  if (n & 1) return 3*n+1;
+  return n>>1;
+}
+
 void iterate_test()
 {
-  // 0 1 2 3 4 5 6 7 8 9
-  auto m = view::iterate([] (int x) { return x + 1; }, 0)
-    | view::take(10);
+  // the collatz sequence for 27: https://oeis.org/A008884
+  auto m = view::iterate(collatz, 27)
+    | view::take_while([] (int n) { return n != 1; });
 
   ranges::for_each(m, [](int i){
       cout << i << ' ';
     });
-  cout << endl;
+  cout << "1" << endl;
 }
 
 void iterate_n_test()
