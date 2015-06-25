@@ -30,7 +30,7 @@ void prettyprint(Rng&& r)
             if (!start)
               s = p.first > 0 ? " + " : " - ";
             if (p.second == 0 || p.first != 1)
-              s += std::to_string(p.first);
+              s += std::to_string(std::abs(p.first));
             s += x_to_power(p.second);
             start = false;
           }
@@ -105,8 +105,8 @@ void ps_multiply_test()
 
 void ps_differentiate_test()
 {
-  // 2 6
-  vector<int> v1{1, 2, 3};
+  // 2 -6
+  vector<int> v1{1, 2, -3};
   prettyprint(power_series::differentiate(v1));
 }
 
