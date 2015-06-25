@@ -24,12 +24,14 @@ void prettyprint(Rng&& r)
   auto m = view::zip(std::forward<Rng>(r),
                      view::iota(0))
     | view::transform(
-        [&start] (const std::pair<int, int>& p) -> std::string {
+        [&start] (const auto& p) -> std::string {
           std::string s;
           if (p.first != 0) {
             if (!start)
               s = p.first > 0 ? " + " : " - ";
-            s += std::to_string(p.first) + x_to_power(p.second);
+            if (p.second == 0 || p.first != 1)
+              s += std::to_string(p.first);
+            s += x_to_power(p.second);
             start = false;
           }
           return s;
@@ -85,27 +87,34 @@ void ps_add_test()
   prettyprint(power_series::add(v1, v2));
 }
 
-void ps_sub_test()
+void ps_subtract_test()
 {
   // 2 4 6 8 10
   vector<int> v1{3, 6, 9, 12, 15};
   vector<int> v2{1, 2, 3, 4, 5};
-  prettyprint(power_series::sub(v1, v2));
+  prettyprint(power_series::subtract(v1, v2));
 }
 
-void ps_mult_test()
+void ps_multiply_test()
 {
   // 1 4 10 20 35 44 46 40 25
   vector<int> v1{1, 2, 3, 4, 5};
   vector<int> v2{1, 2, 3, 4, 5};
-  prettyprint(power_series::mult(v1, v2));
+  prettyprint(power_series::multiply(v1, v2));
 }
 
-void ps_diff_test()
+void ps_differentiate_test()
 {
   // 2 6
   vector<int> v1{1, 2, 3};
-  prettyprint(power_series::diff(v1));
+  prettyprint(power_series::differentiate(v1));
+}
+
+void ps_integrate_test()
+{
+  // 0 1 1/2 1/3
+  vector<int> v1{1, 1, 1};
+  prettyprint(power_series::integrate(v1));
 }
 
 int main(int, char* [])
@@ -115,7 +124,8 @@ int main(int, char* [])
   iterate_n_test();
 
   ps_add_test();
-  ps_sub_test();
-  ps_mult_test();
-  ps_diff_test();
+  ps_subtract_test();
+  ps_multiply_test();
+  ps_differentiate_test();
+  ps_integrate_test();
 }
