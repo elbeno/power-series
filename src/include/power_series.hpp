@@ -39,4 +39,13 @@ namespace power_series
     return ranges::view::series_mult(std::forward<R1>(r1),
                                      std::forward<R2>(r2));
   }
+
+  template <typename Rng>
+  auto diff(Rng&& r)
+  {
+    return ranges::view::zip_with(std::multiplies<>(),
+                                  ranges::view::iota(1),
+                                  ranges::view::tail(std::forward<Rng>(r)));
+  }
+
 }
