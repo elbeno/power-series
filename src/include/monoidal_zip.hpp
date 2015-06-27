@@ -240,7 +240,7 @@ namespace ranges
           Callable<Fun, copy_tag, range_iterator_t<R1>, range_iterator_t<R2>>,
           Callable<Fun, move_tag, range_iterator_t<R1>, range_iterator_t<R2>>>;
 
-        template<typename R1, typename R2, typename Z, typename Fun,
+        template<typename R1, typename R2, typename Fun, typename Z,
                  CONCEPT_REQUIRES_(Concept<Fun, R1, R2>())>
         iter_monoidal_zip_view<Fun, all_t<R1>, all_t<R2>, Z> operator()(
             Fun fun, R1 && r1, R2 && r2, Z && z) const
@@ -254,9 +254,9 @@ namespace ranges
         }
 
 #ifndef RANGES_DOXYGEN_INVOKED
-        template<typename Fun, typename R1, typename R2,
+        template<typename Fun, typename R1, typename R2, typename Z,
                  CONCEPT_REQUIRES_(!Concept<Fun, R1, R2>())>
-        void operator()(Fun, R1 && r1, R2 && r2) const
+        void operator()(Fun, R1 &&, R2 &&, Z &&) const
         {
           CONCEPT_ASSERT_MSG(meta::and_<InputRange<R1>, InputRange<R2>>(),
                              "All of the objects passed to view::iter_monoidal_zip must model "
@@ -289,7 +289,7 @@ namespace ranges
           InputRange<R1>, InputRange<R2>,
           Callable<Fun, range_reference_t<R1> &&, range_reference_t<R2> &&>>;
 
-        template<typename R1, typename R2, typename Z, typename Fun,
+        template<typename R1, typename R2, typename Fun, typename Z,
                  CONCEPT_REQUIRES_(Concept<Fun, R1, R2>())>
         monoidal_zip_view<Fun, all_t<R1>, all_t<R2>, Z> operator()(
             Fun fun, R1 && r1, R2 && r2, Z && z) const
@@ -303,9 +303,9 @@ namespace ranges
         }
 
 #ifndef RANGES_DOXYGEN_INVOKED
-        template<typename Fun, typename R1, typename R2,
+        template<typename Fun, typename R1, typename R2, typename Z,
                  CONCEPT_REQUIRES_(!Concept<Fun, R1, R2>())>
-        void operator()(Fun, R1 &&, R2 &&) const
+        void operator()(Fun, R1 &&, R2 &&, Z &&) const
         {
           CONCEPT_ASSERT_MSG(meta::and_<InputRange<R1>, InputRange<R2>>(),
                              "All of the objects passed to view::monoidal_zip must model "
