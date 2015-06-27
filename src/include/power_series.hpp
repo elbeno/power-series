@@ -2,7 +2,13 @@
 
 #include "monoidal_zip.hpp"
 #include "series_mult.hpp"
-#include "range/v3/all.hpp"
+
+#include <range/v3/view/concat.hpp>
+#include <range/v3/view/iota.hpp>
+#include <range/v3/view/single.hpp>
+#include <range/v3/view/tail.hpp>
+#include <range/v3/view/transform.hpp>
+#include <range/v3/view/zip_with.hpp>
 
 #include <functional>
 
