@@ -26,7 +26,8 @@ namespace ranges
     struct iter_series_mult_view
       : view_facade<iter_series_mult_view<R1, R2>,
                     detail::series_mult_cardinality<
-                      range_cardinality<R1>, range_cardinality<R2>>::value>
+                      range_cardinality<R1>,
+                      range_cardinality<R2>>::value>
     {
     private:
       CONCEPT_ASSERT(meta::and_<BidirectionalRange<R1>, BidirectionalRange<R2>>());
@@ -226,9 +227,8 @@ namespace ranges
                                    (bool) SizedRange<R2>()>::value)
       constexpr size_type_ size() const
       {
-        return static_cast<size_type_>(
-            range_cardinality<R1>::value +
-            range_cardinality<R2>::value - 1);
+        return detail::series_mult_cardinality<
+          range_cardinality<R1>, range_cardinality<R2>>::value;
       }
     };
 
