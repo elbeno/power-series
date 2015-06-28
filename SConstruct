@@ -3,12 +3,14 @@ import os
 buildType = 'debug'
 
 range_include = '#contrib/range-v3/include'
+test_include = '#contrib/testinator/src/include'
+
 include = '#build/$BUILDTYPE/include'
 lib = '#build/$BUILDTYPE/lib'
 bin = '#build/$BUILDTYPE/bin'
 
 env = Environment(BUILDTYPE = buildType,
-                  CPPPATH = [include, range_include],
+                  CPPPATH = [include, range_include, test_include],
                   LIBPATH = [lib])
 
 env.Append(CCFLAGS = "-g -std=c++1y")

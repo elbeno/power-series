@@ -1,3 +1,6 @@
 [submodule "contrib/range-v3"]
 	path = contrib/range-v3
 	url = git@github.com:ericniebler/range-v3.git
+[submodule "contrib/testinator"]
+	path = contrib/testinator
+	url = git@github.com:elbeno/testinator.git
