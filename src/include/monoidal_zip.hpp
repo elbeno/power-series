@@ -20,9 +20,9 @@ namespace ranges
                 finite>;
     } // namespace detail
 
-    template<typename Fun, typename R1, typename R2, typename Z>
+    template<typename Fun, typename R1, typename R2>
     struct iter_monoidal_zip_view
-      : view_facade<iter_monoidal_zip_view<Fun, R1, R2, Z>,
+      : view_facade<iter_monoidal_zip_view<Fun, R1, R2>,
                     detail::monoidal_zip_cardinality<range_cardinality<R1>,
                                                      range_cardinality<R2>>::value>
     {
@@ -31,7 +31,6 @@ namespace ranges
       semiregular_t<function_type<Fun>> fun_;
       R1 r1_;
       R2 r2_;
-      Z z_;
 
       using difference_type_ = common_type_t<range_difference_t<R1>,
                                              range_difference_t<R2>>;
@@ -82,9 +81,7 @@ namespace ranges
         (
           diff_ == 0 ?
             fun_(it1_, it2_) :
-            diff_ > 0 ?
-              fun_(it1_, &rng_->z_) :
-              fun_(&rng_->z_, it2_)
+            diff_ > 0 ? *it1_ : *it2_
         )
         void next()
         {
@@ -196,17 +193,15 @@ namespace ranges
       }
     public:
       iter_monoidal_zip_view() = default;
-      explicit iter_monoidal_zip_view(R1 r1, R2 r2, Z z)
+      explicit iter_monoidal_zip_view(R1 r1, R2 r2)
         : fun_(as_function(Fun{}))
         , r1_{std::move(r1)}
         , r2_{std::move(r2)}
-        , z_{std::move(z)}
       {}
-      explicit iter_monoidal_zip_view(Fun fun, R1 r1, R2 r2, Z z)
+      explicit iter_monoidal_zip_view(Fun fun, R1 r1, R2 r2)
         : fun_(as_function(std::move(fun)))
         , r1_{std::move(r1)}
         , r2_{std::move(r2)}
-        , z_{std::move(z)}
       {}
       CONCEPT_REQUIRES(meta::and_c<(bool) SizedRange<R1>(),
                                    (bool) SizedRange<R2>()>::value)
@@ -219,18 +214,18 @@ namespace ranges
       }
     };
 
-    template<typename Fun, typename R1, typename R2, typename Z>
+    template<typename Fun, typename R1, typename R2>
     struct monoidal_zip_view
-      : iter_monoidal_zip_view<indirected<Fun>, R1, R2, Z>
+      : iter_monoidal_zip_view<indirected<Fun>, R1, R2>
     {
       monoidal_zip_view() = default;
-      explicit monoidal_zip_view(R1 r1, R2 r2, Z z)
-        : iter_monoidal_zip_view<indirected<Fun>, R1, R2, Z>{
-        {Fun{}}, std::move(r1), std::move(r2), std::move(z)}
+      explicit monoidal_zip_view(R1 r1, R2 r2)
+        : iter_monoidal_zip_view<indirected<Fun>, R1, R2>{
+        {Fun{}}, std::move(r1), std::move(r2)}
       {}
-      explicit monoidal_zip_view(Fun fun, R1 r1, R2 r2, Z z)
-        : iter_monoidal_zip_view<indirected<Fun>, R1, R2, Z>{
-        {std::move(fun)}, std::move(r1), std::move(r2), std::move(z)}
+      explicit monoidal_zip_view(Fun fun, R1 r1, R2 r2)
+        : iter_monoidal_zip_view<indirected<Fun>, R1, R2>{
+        {std::move(fun)}, std::move(r1), std::move(r2)}
       {}
     };
 
@@ -245,23 +240,22 @@ namespace ranges
           Callable<Fun, copy_tag, range_iterator_t<R1>, range_iterator_t<R2>>,
           Callable<Fun, move_tag, range_iterator_t<R1>, range_iterator_t<R2>>>;
 
-        template<typename R1, typename R2, typename Fun, typename Z,
+        template<typename R1, typename R2, typename Fun,
                  CONCEPT_REQUIRES_(Concept<Fun, R1, R2>())>
-        iter_monoidal_zip_view<Fun, all_t<R1>, all_t<R2>, Z> operator()(
-            Fun fun, R1 && r1, R2 && r2, Z && z) const
+        iter_monoidal_zip_view<Fun, all_t<R1>, all_t<R2>> operator()(
+            Fun fun, R1 && r1, R2 && r2) const
         {
-          return iter_monoidal_zip_view<Fun, all_t<R1>, all_t<R2>, Z>{
+          return iter_monoidal_zip_view<Fun, all_t<R1>, all_t<R2>>{
               std::move(fun),
               all(std::forward<R1>(r1)),
-              all(std::forward<R2>(r2)),
-              std::forward<Z>(z)
+              all(std::forward<R2>(r2))
           };
         }
 
 #ifndef RANGES_DOXYGEN_INVOKED
-        template<typename Fun, typename R1, typename R2, typename Z,
+        template<typename Fun, typename R1, typename R2,
                  CONCEPT_REQUIRES_(!Concept<Fun, R1, R2>())>
-        void operator()(Fun, R1 &&, R2 &&, Z &&) const
+        void operator()(Fun, R1 &&, R2 &&) const
         {
           CONCEPT_ASSERT_MSG(meta::and_<InputRange<R1>, InputRange<R2>>(),
                              "All of the objects passed to view::iter_monoidal_zip must model "
@@ -294,23 +288,22 @@ namespace ranges
           InputRange<R1>, InputRange<R2>,
           Callable<Fun, range_reference_t<R1> &&, range_reference_t<R2> &&>>;
 
-        template<typename R1, typename R2, typename Fun, typename Z,
+        template<typename R1, typename R2, typename Fun,
                  CONCEPT_REQUIRES_(Concept<Fun, R1, R2>())>
-        monoidal_zip_view<Fun, all_t<R1>, all_t<R2>, Z> operator()(
-            Fun fun, R1 && r1, R2 && r2, Z && z) const
+        monoidal_zip_view<Fun, all_t<R1>, all_t<R2>> operator()(
+            Fun fun, R1 && r1, R2 && r2) const
         {
-          return monoidal_zip_view<Fun, all_t<R1>, all_t<R2>, Z>{
+          return monoidal_zip_view<Fun, all_t<R1>, all_t<R2>>{
               std::move(fun),
               all(std::forward<R1>(r1)),
-              all(std::forward<R2>(r2)),
-              std::forward<Z>(z)
+              all(std::forward<R2>(r2))
           };
         }
 
 #ifndef RANGES_DOXYGEN_INVOKED
-        template<typename Fun, typename R1, typename R2, typename Z,
+        template<typename Fun, typename R1, typename R2,
                  CONCEPT_REQUIRES_(!Concept<Fun, R1, R2>())>
-        void operator()(Fun, R1 &&, R2 &&, Z &&) const
+        void operator()(Fun, R1 &&, R2 &&) const
         {
           CONCEPT_ASSERT_MSG(meta::and_<InputRange<R1>, InputRange<R2>>(),
                              "All of the objects passed to view::monoidal_zip must model "

@@ -22,7 +22,7 @@ DEF_TEST(EqualCardinality, MonoidalZip)
       [] (const string& a, const string& b) {
         return a + b;
       },
-      v1, v2, string());
+      v1, v2);
   string s = ranges::accumulate(
       m,
       string(),
@@ -43,7 +43,7 @@ DEF_TEST(EqualCardinalityReverse, MonoidalZip)
           [] (const string& a, const string& b) {
             return a + b;
           },
-          v1, v2, string()));
+          v1, v2));
   string s = ranges::accumulate(
       m,
       string(),
@@ -63,7 +63,7 @@ DEF_TEST(LargerFirst, MonoidalZip)
       [] (const string& a, const string& b) {
         return a + b;
       },
-      v1, v2, string());
+      v1, v2);
   string s = ranges::accumulate(
       m,
       string(),
@@ -84,7 +84,7 @@ DEF_TEST(LargerFirstReverse, MonoidalZip)
           [] (const string& a, const string& b) {
             return a + b;
           },
-          v1, v2, string()));
+          v1, v2));
   string s = ranges::accumulate(
       m,
       string(),
@@ -104,7 +104,7 @@ DEF_TEST(LargerSecond, MonoidalZip)
       [] (const string& a, const string& b) {
         return a + b;
       },
-      v1, v2, string());
+      v1, v2);
   string s = ranges::accumulate(
       m,
       string(),
@@ -125,7 +125,7 @@ DEF_TEST(LargerSecondReverse, MonoidalZip)
           [] (const string& a, const string& b) {
             return a + b;
           },
-          v1, v2, string()));
+          v1, v2));
   string s = ranges::accumulate(
       m,
       string(),

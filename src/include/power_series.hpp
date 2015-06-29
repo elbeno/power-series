@@ -31,8 +31,7 @@ namespace power_series
   {
     return ranges::view::monoidal_zip(std::plus<>(),
                                       std::forward<R1>(r1),
-                                      std::forward<R2>(r2),
-                                      0);
+                                      std::forward<R2>(r2));
   }
 
   template <typename R1, typename R2>
@@ -40,8 +39,7 @@ namespace power_series
   {
     return ranges::view::monoidal_zip(std::minus<>(),
                                       std::forward<R1>(r1),
-                                      std::forward<R2>(r2),
-                                      0);
+                                      std::forward<R2>(r2));
   }
 
   template <typename R1, typename R2>
