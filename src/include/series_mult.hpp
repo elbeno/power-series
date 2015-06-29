@@ -114,8 +114,8 @@ namespace ranges
           // r2 longer than r1
           if (it1_ == end(rng_->r1_))
           {
-            --diff_;
             detail::inc(it2_);
+            --diff_;
             return;
           }
           // same
@@ -150,8 +150,8 @@ namespace ranges
           // r2 longer than r1
           if (diff_ < 0)
           {
-            ++diff_;
             detail::dec(it2_);
+            ++diff_;
             return;
           }
           // same
@@ -227,8 +227,12 @@ namespace ranges
                                    (bool) SizedRange<R2>()>::value)
       constexpr size_type_ size() const
       {
-        return detail::series_mult_cardinality<
-          range_cardinality<R1>, range_cardinality<R2>>::value;
+        return detail::series_mult_cardinality<range_cardinality<R1>,
+                                               range_cardinality<R2>>::value > 0 ?
+          static_cast<size_type_>(
+              detail::series_mult_cardinality<range_cardinality<R1>,
+                                              range_cardinality<R2>>::value) :
+              ranges::size(r1_) + ranges::size(r2_) - 1;
       }
     };
 

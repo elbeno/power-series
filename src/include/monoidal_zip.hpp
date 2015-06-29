@@ -129,8 +129,8 @@ namespace ranges
           // r2 longer than r1
           if (diff_ < 0)
           {
-            ++diff_;
             detail::dec(it2_);
+            ++diff_;
             return;
           }
           // same
@@ -153,11 +153,12 @@ namespace ranges
         template <typename T>
         using constify_if = meta::apply<meta::add_const_if_c<IsConst>, T>;
         using monoidal_zip_view_t = constify_if<iter_monoidal_zip_view>;
+        using fun_ref_ = semiregular_ref_or_val_t<function_type<Fun>, true>;
         range_sentinel_t<constify_if<R1>> end1_;
         range_sentinel_t<constify_if<R2>> end2_;
       public:
         sentinel() = default;
-        sentinel(monoidal_zip_view_t &rng, end_tag)
+        sentinel(monoidal_zip_view_t &rng, fun_ref_, end_tag)
           : end1_(end(rng.r1_))
           , end2_(end(rng.r2_))
         {}
@@ -211,9 +212,10 @@ namespace ranges
                                    (bool) SizedRange<R2>()>::value)
       constexpr size_type_ size() const
       {
-        return static_cast<size_type_>(
-            detail::max_(range_cardinality<R1>::value,
-                         range_cardinality<R2>::value));
+        return range_cardinality<R1>::value > 0 && range_cardinality<R1>::value > 0 ?
+          static_cast<size_type_>(detail::max_(range_cardinality<R1>::value,
+                                               range_cardinality<R2>::value)) :
+          detail::max_(ranges::size(r1_), ranges::size(r2_));
       }
     };
 
