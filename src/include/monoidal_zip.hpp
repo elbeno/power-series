@@ -89,28 +89,31 @@ namespace ranges
         void next()
         {
           // r1 longer than r2
-          if (it2_ == end(rng_->r2_))
+          if (diff_ > 0)
           {
             detail::inc(it1_);
             ++diff_;
             return;
           }
           // r2 longer than r1
-          if (it1_ == end(rng_->r1_))
+          if (diff_ < 0)
           {
-            --diff_;
             detail::inc(it2_);
+            --diff_;
             return;
           }
           // same
           detail::inc(it1_);
           detail::inc(it2_);
+          if (it2_ == end(rng_->r2_))
+            ++diff_;
+          if (it1_ == end(rng_->r1_))
+            --diff_;
         }
         bool equal(cursor const &that) const
         {
           return detail::equal_to(it1_, that.it1_)
-            && detail::equal_to(it2_, that.it2_)
-            && diff_ == that.diff_;
+            && detail::equal_to(it2_, that.it2_);
         }
         CONCEPT_REQUIRES(meta::and_c<(bool) BidirectionalRange<R1>(),
                                      (bool) BidirectionalRange<R2>()>::value)
