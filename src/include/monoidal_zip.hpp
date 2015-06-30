@@ -73,9 +73,14 @@ namespace ranges
           , fun_{std::move(fun)}
           , it1_{end(rng.r1_)}
           , it2_{end(rng.r2_)}
-          , diff_{detail::distance_to(begin(rng.r1_), it1_) -
-                detail::distance_to(begin(rng.r2_), it2_)}
+          , diff_{end_diff()}
         {}
+        difference_type end_diff()
+        {
+          difference_type d = detail::distance_to(begin(rng_->r1_), it1_) -
+            detail::distance_to(begin(rng_->r2_), it2_);
+          return d > 0 ? d + 1 : d - 1;
+        }
         auto current() const
         RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
         (
@@ -120,14 +125,16 @@ namespace ranges
           if (diff_ > 0)
           {
             detail::dec(it1_);
-            --diff_;
+            if (--diff_ == 0)
+              detail::dec(it2_);
             return;
           }
           // r2 longer than r1
           if (diff_ < 0)
           {
             detail::dec(it2_);
-            ++diff_;
+            if (++diff_ == 0)
+              detail::dec(it1_);
             return;
           }
           // same
