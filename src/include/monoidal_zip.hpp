@@ -93,29 +93,27 @@ namespace ranges
           // r1 longer than r2
           if (diff_ > 0)
           {
-            detail::inc(it1_);
+            ++it1_;
             ++diff_;
             return;
           }
           // r2 longer than r1
           if (diff_ < 0)
           {
-            detail::inc(it2_);
+            ++it2_;
             --diff_;
             return;
           }
           // same
-          detail::inc(it1_);
-          detail::inc(it2_);
-          if (it2_ == end(rng_->r2_))
+          if (++it2_ == end(rng_->r2_))
             ++diff_;
-          if (it1_ == end(rng_->r1_))
+          if (++it1_ == end(rng_->r1_))
             --diff_;
         }
         bool equal(cursor const &that) const
         {
-          return detail::equal_to(it1_, that.it1_)
-            && detail::equal_to(it2_, that.it2_);
+          return it1_ == that.it1_
+            && it2_ == that.it2_;
         }
         CONCEPT_REQUIRES(meta::and_c<(bool) BidirectionalRange<R1>(),
                                      (bool) BidirectionalRange<R2>()>::value)
@@ -124,22 +122,22 @@ namespace ranges
           // r1 longer than r2
           if (diff_ > 0)
           {
-            detail::dec(it1_);
+            --it1_;
             if (--diff_ == 0)
-              detail::dec(it2_);
+              --it2_;
             return;
           }
           // r2 longer than r1
           if (diff_ < 0)
           {
-            detail::dec(it2_);
+            --it2_;
             if (++diff_ == 0)
-              detail::dec(it1_);
+              --it1_;
             return;
           }
           // same
-          detail::dec(it1_);
-          detail::dec(it2_);
+          --it1_;
+          --it2_;
         }
         CONCEPT_REQUIRES(meta::and_c<(bool) RandomAccessRange<R1>(),
                                      (bool) RandomAccessRange<R2>()>::value)
